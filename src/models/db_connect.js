@@ -3,7 +3,8 @@ const mysql = import('mysql');
 const con = mysql.createConnection({
     host: "localhost",
     user: "root",
-    password: ""//troca a senha do banco quando for usar 
+    password: "",//troca a senha do banco quando for usar
+    database: "CRM"
   });
   
   con.connect(function(err) {
