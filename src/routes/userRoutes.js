@@ -12,4 +12,6 @@ router.get("/", getAllUsers); // Rota para obter todos os usuários
 router.get("/:id", getUserById); // Rota para obter um usuário por ID
 router.post("/", createUser); // Rota para criar um novo usuário
 
+
+
 export default router;
