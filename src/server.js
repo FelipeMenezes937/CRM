@@ -25,16 +25,16 @@ async function initDB() {
   
   // Adicionar colunas se não existirem
   if (!columns.includes('status')) {
-    await pool.query('ALTER TABLE clients ADD COLUMN status VARCHAR(20) DEFAULT lead');
+    await pool.query("ALTER TABLE clients ADD COLUMN status VARCHAR(20) DEFAULT 'lead'");
   }
   if (!columns.includes('value')) {
-    await pool.query('ALTER TABLE clients ADD COLUMN value DECIMAL(10,2) DEFAULT 0');
+    await pool.query("ALTER TABLE clients ADD COLUMN value DECIMAL(10,2) DEFAULT 0");
   }
   if (!columns.includes('notes')) {
     await pool.query('ALTER TABLE clients ADD COLUMN notes TEXT');
   }
   if (!columns.includes('updated_at')) {
-    await pool.query('ALTER TABLE clients ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+    await pool.query('ALTER TABLE clients ADD COLUMN updated_at TIMESTAMP');
   }
   
   // Criar tabela de tarefas se não existir
