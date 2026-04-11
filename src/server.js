@@ -1,10 +1,8 @@
 import express from "express";
 import pkg from 'pg';
 const { Pool } = pkg;
-import userRoutes from "./routes/userRoutes.js";
 
 const app = express();
-import * as homeController from './controllers/homeController.js'
 
 const pool = new Pool({
   user: 'crm',
@@ -15,21 +13,31 @@ const pool = new Pool({
 });
 
 async function initDB() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS clients (
-      id SERIAL PRIMARY KEY,
-      name VARCHAR(100) NOT NULL,
-      email VARCHAR(100),
-      phone VARCHAR(20),
-      company VARCHAR(100),
-      status VARCHAR(20) DEFAULT 'lead',
-      value DECIMAL(10,2) DEFAULT 0,
-      notes TEXT,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
+  // Verificar se a tabela existe e suas colunas
+  const tableCheck = await pool.query(`
+    SELECT column_name 
+    FROM information_schema.columns 
+    WHERE table_name = 'clients'
   `);
   
+  const columns = tableCheck.rows.map(r => r.column_name);
+  console.log('Existing columns:', columns);
+  
+  // Adicionar colunas se não existirem
+  if (!columns.includes('status')) {
+    await pool.query('ALTER TABLE clients ADD COLUMN status VARCHAR(20) DEFAULT lead');
+  }
+  if (!columns.includes('value')) {
+    await pool.query('ALTER TABLE clients ADD COLUMN value DECIMAL(10,2) DEFAULT 0');
+  }
+  if (!columns.includes('notes')) {
+    await pool.query('ALTER TABLE clients ADD COLUMN notes TEXT');
+  }
+  if (!columns.includes('updated_at')) {
+    await pool.query('ALTER TABLE clients ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+  }
+  
+  // Criar tabela de tarefas se não existir
   await pool.query(`
     CREATE TABLE IF NOT EXISTS tasks (
       id SERIAL PRIMARY KEY,
@@ -42,13 +50,44 @@ async function initDB() {
     )
   `);
   
-  console.log('Database initialized - PostgreSQL connected!');
+  console.log('Database initialized!');
 }
 
 app.use(express.json());
 
-app.use("/", homeController.paginainicial)
-app.use("/clients", userRoutes);
+// Clients endpoints
+app.get('/clients', async (req, res) => {
+  const result = await pool.query('SELECT * FROM clients ORDER BY created_at DESC');
+  res.json(result.rows);
+});
+
+app.get('/clients/:id', async (req, res) => {
+  const result = await pool.query('SELECT * FROM clients WHERE id = $1', [req.params.id]);
+  res.json(result.rows[0]);
+});
+
+app.post('/clients', async (req, res) => {
+  const { name, email, phone, company, status, value, notes } = req.body;
+  const result = await pool.query(
+    'INSERT INTO clients (name, email, phone, company, status, value, notes) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+    [name, email, phone, company, status || 'lead', value || 0, notes || '']
+  );
+  res.json(result.rows[0]);
+});
+
+app.put('/clients/:id', async (req, res) => {
+  const { name, email, phone, company, status, value, notes } = req.body;
+  await pool.query(
+    'UPDATE clients SET name = $1, email = $2, phone = $3, company = $4, status = $5, value = $6, notes = $7, updated_at = CURRENT_TIMESTAMP WHERE id = $8',
+    [name, email, phone, company, status, value, notes, req.params.id]
+  );
+  res.json({ success: true });
+});
+
+app.delete('/clients/:id', async (req, res) => {
+  await pool.query('DELETE FROM clients WHERE id = $1', [req.params.id]);
+  res.json({ success: true });
+});
 
 // Tasks endpoints
 app.get('/api/tasks', async (req, res) => {
@@ -89,4 +128,4 @@ app.listen(3000, () => {
 })
 
 export { pool };
-initDB();
+initDB().catch(console.error);
