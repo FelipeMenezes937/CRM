@@ -1,17 +1,16 @@
-// Lidar com requisição e resposta HTTP
 import {
   getAllUsersService,
   getUserByIdService,
   createUserService,
+  updateUserService,
+  deleteUserService,
 } from "../services/userService.js";
 
-// Controlador para obter todos os usuários
 export const getAllUsers = async (req, res) => {
   const users = await getAllUsersService();
   res.json(users);
 };
 
-// Controlador para obter um usuário pelo ID
 export const getUserById = async (req, res) => {
   const { id } = req.params;
   const user = await getUserByIdService(id);
@@ -22,8 +21,19 @@ export const getUserById = async (req, res) => {
   }
 };
 
-// Controlador para criar um novo usuário
 export const createUser = async (req, res) => {
   const newUser = await createUserService(req.body);
   res.status(201).json(newUser);
+};
+
+export const updateUser = async (req, res) => {
+  const { id } = req.params;
+  const updatedUser = await updateUserService(id, req.body);
+  res.json(updatedUser);
+};
+
+export const deleteUser = async (req, res) => {
+  const { id } = req.params;
+  await deleteUserService(id);
+  res.json({ message: "User deleted" });
 };

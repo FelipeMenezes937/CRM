@@ -5,7 +5,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "node --watch src/server.js"
+    "dev": "node --watch src/server.js",
+    "dev:all": "npm run dev & cd front && npm run dev",
+    "start": "node src/server.js"
   },
   "engines": {
     "node": "21"
@@ -15,6 +17,6 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.21.2",
-    "mysql": "^2.18.1"
+    "pg": "^8.11.3"
   }
 }
